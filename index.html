@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GoodVOS - Virtual Operating System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            background-color: #0a0e27;
+        }
+
+        /* ===== WELCOME SCREEN ===== */
+        .welcome-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 10000;
+            animation: fadeOut 0.8s ease-out forwards;
+            animation-delay: 3s;
+        }
+
+        .welcome-screen.hidden {
+            display: none;
+        }
+
+        .welcome-text {
+            font-size: 48px;
+            font-weight: bold;
+            color: #00ff88;
+            text-shadow: 0 0 20px #00ff88, 0 0 40px #0099ff;
+            margin-bottom: 50px;
+            animation: glow 1.5s ease-in-out infinite;
+            letter-spacing: 2px;
+        }
+
+        @keyframes glow {
+            0%, 100% {
+                text-shadow: 0 0 20px #00ff88, 0 0 40px #0099ff;
+            }
+            50% {
+                text-shadow: 0 0 30px #00ff88, 0 0 60px #0099ff, 0 0 80px #00ff88;
+            }
+        }
+
+        .start-button {
+            padding: 15px 40px;
+            font-size: 18px;
+            background: linear-gradient(135deg, #00ff88 0%, #0099ff 100%);
+            color: #0a0e27;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+        }
+
+        .start-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 40px rgba(0, 255, 136, 0.8);
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+                pointer-events: none;
+            }
+        }
+
+        /* ===== DESKTOP ===== */
+        #desktop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: calc(100% - 60px);
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            z-index: 1;
+        }
+
+        .desktop-icons {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 120px;
+        }
+
+        .desktop-icon {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+
+        .desktop-icon:hover {
+            transform: scale(1.1);
+        }
+
+        .icon-image {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 255, 136, 0.1);
+            border-radius: 10px;
+            font-size: 32px;
+            border: 2px solid rgba(0, 255, 136, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .desktop-icon:hover .icon-image {
+            background: rgba(0, 255, 136, 0.2);
+            border-color: rgba(0, 255, 136, 0.8);
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.5);
+        }
+
+        .icon-label {
+            font-size: 12px;
+            color: #fff;
+            text-align: center;
+            word-wrap: break-word;
+        }
+
+        /* ===== TASKBAR ===== */
+        .taskbar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            background: rgba(10, 14, 39, 0.95);
+            border-top: 1px solid rgba(0, 255, 136, 0.2);
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            gap: 10px;
+            z-index: 999;
+            box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .start-menu-button {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #00ff88 0%, #0099ff 100%);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            color: #0a0e27;
+            font-size: 20px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .start-menu-button:hover {
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.6);
+            transform: scale(1.05);
+        }
+
+        .taskbar-separator {
+            width: 1px;
+            height: 40px;
+            background: rgba(0, 255, 136, 0.2);
+            margin: 0 5px;
+        }
+
+        .taskbar-item {
+            height: 50px;
+            padding: 0 15px;
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            border-radius: 6px;
+            color: #fff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            font-size: 12px;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .taskbar-item:hover {
+            background: rgba(0, 255, 136, 0.2);
+            box-shadow: 0 0 10px rgba(0, 255, 136, 0.4);
+        }
+
+        .taskbar-item.active {
+            background: rgba(0, 255, 136, 0.3);
+            border-color: rgba(0, 255, 136, 0.8);
+        }
+
+        .time {
+            margin-left: auto;
+            font-size: 14px;
+            color: #00ff88;
+        }
+
+        /* ===== WINDOWS ===== */
+        .window {
+            position: fixed;
+            min-width: 400px;
+            min-height: 300px;
+            background: rgba(20, 25, 50, 0.98);
+            border: 2px solid rgba(0, 255, 136, 0.4);
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.7), 0 0 20px rgba(0, 255, 136, 0.2);
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+            overflow: hidden;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .window-header {
+            background: linear-gradient(90deg, rgba(0, 255, 136, 0.2), rgba(0, 153, 255, 0.2));
+            padding: 12px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: move;
+            border-bottom: 1px solid rgba(0, 255, 136, 0.2);
+            user-select: none;
+        }
+
+        .window-title {
+            color: #00ff88;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .window-button {
+            width: 30px;
+            height: 30px;
+            border: 1px solid rgba(0, 255, 136, 0.4);
+            background: rgba(0, 255, 136, 0.1);
+            color: #00ff88;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .window-button:hover {
+            background: rgba(0, 255, 136, 0.3);
+            box-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+        }
+
+        .window-button.close:hover {
+            background: rgba(255, 50, 50, 0.3);
+            color: #ff3232;
+            border-color: rgba(255, 50, 50, 0.6);
+        }
+
+        .window-content {
+            flex: 1;
+            overflow: auto;
+            padding: 15px;
+            color: #00ff88;
+        }
+
+        /* ===== BROWSER WINDOW ===== */
+        .browser-address-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .browser-address-bar input {
+            flex: 1;
+            padding: 8px 12px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            border-radius: 4px;
+            color: #00ff88;
+            font-size: 12px;
+        }
+
+        .browser-address-bar input::placeholder {
+            color: rgba(0, 255, 136, 0.5);
+        }
+
+        .browser-address-bar button {
+            padding: 8px 15px;
+            background: rgba(0, 255, 136, 0.2);
+            border: 1px solid rgba(0, 255, 136, 0.4);
+            color: #00ff88;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .browser-address-bar button:hover {
+            background: rgba(0, 255, 136, 0.3);
+        }
+
+        .browser-iframe {
+            width: 100%;
+            height: calc(100% - 40px);
+            border: none;
+            background: #fff;
+            border-radius: 4px;
+        }
+
+        /* ===== TERMINAL ===== */
+        .terminal {
+            background: #000;
+            color: #00ff88;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            padding: 10px;
+            height: 100%;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .terminal-output {
+            flex: 1;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            margin-bottom: 10px;
+        }
+
+        .terminal-input-line {
+            display: flex;
+            gap: 5px;
+        }
+
+        .terminal-prompt {
+            color: #0099ff;
+            font-weight: bold;
+        }
+
+        .terminal-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #00ff88;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            caret-color: #00ff88;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 18px;
+            background: #00ff88;
+            margin-left: 2px;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 49% { opacity: 1; }
+            50%, 100% { opacity: 0; }
+        }
+
+        /* ===== FILE MANAGER ===== */
+        .file-manager-header {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(0, 255, 136, 0.2);
+        }
+
+        .file-manager-header button {
+            padding: 6px 12px;
+            background: rgba(0, 255, 136, 0.2);
+            border: 1px solid rgba(0, 255, 136, 0.4);
+            color: #00ff88;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            transition: all 0.2s ease;
+        }
+
+        .file-manager-header button:hover {
+            background: rgba(0, 255, 136, 0.3);
+        }
+
+        .current-path {
+            font-size: 12px;
+            color: #0099ff;
+            margin-bottom: 10px;
+        }
+
+        .file-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            background: rgba(0, 255, 136, 0.05);
+            border: 1px solid rgba(0, 255, 136, 0.2);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .file-item:hover {
+            background: rgba(0, 255, 136, 0.15);
+            border-color: rgba(0, 255, 136, 0.4);
+        }
+
+        .file-item.selected {
+            background: rgba(0, 255, 136, 0.25);
+            border-color: rgba(0, 255, 136, 0.6);
+        }
+
+        .file-icon {
+            font-size: 18px;
+            width: 20px;
+        }
+
+        .file-name {
+            flex: 1;
+            font-size: 12px;
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .file-actions button {
+            padding: 4px 8px;
+            background: rgba(255, 50, 50, 0.2);
+            border: 1px solid rgba(255, 50, 50, 0.4);
+            color: #ff5555;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .file-actions button:hover {
+            background: rgba(255, 50, 50, 0.4);
+        }
+
+        /* ===== SETTINGS ===== */
+        .settings-section {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(0, 255, 136, 0.2);
+        }
+
+        .settings-section-title {
+            color: #0099ff;
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 13px;
+        }
+
+        .settings-option {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 12px;
+        }
+
+        .settings-option label {
+            color: #00ff88;
+        }
+
+        .settings-option select,
+        .settings-option input {
+            padding: 6px 10px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            color: #00ff88;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .wallpaper-preview {
+            width: 100%;
+            height: 100px;
+            background-size: cover;
+            background-position: center;
+            border: 2px solid rgba(0, 255, 136, 0.4);
+            border-radius: 6px;
+            margin-top: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .wallpaper-preview:hover {
+            border-color: rgba(0, 255, 136, 0.8);
+            box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+        }
+
+        /* ===== SCROLLBAR STYLING ===== */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 255, 136, 0.4);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 255, 136, 0.6);
+        }
+    </style>
+</head>
+<body>
+    <!-- Welcome Screen -->
+    <div class="welcome-screen" id="welcomeScreen">
+        <div class="welcome-text">Welcome To GoodVOS</div>
+        <button class="start-button" onclick="startSystem()">Sistemi Başlat</button>
+    </div>
+
+    <!-- Desktop -->
+    <div id="desktop"></div>
+
+    <!-- Desktop Icons -->
+    <div class="desktop-icons" id="desktopIcons"></div>
+
+    <!-- Taskbar -->
+    <div class="taskbar">
+        <button class="start-menu-button" title="Start Menu">⚙️</button>
+        <div class="taskbar-separator"></div>
+        <div id="taskbarItems"></div>
+        <div class="time" id="time"></div>
+    </div>
+
+    <script>
+        // ===== GLOBAL STATE =====
+        const GoodVOS = {
+            windows: [],
+            fileSystem: null,
+            wallpaper: 'linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%)',
+            nextWindowId: 1000,
+            desktopIcons: [
+                { name: 'Browser', icon: '🌐', app: 'browser' },
+                { name: 'Terminal', icon: '⌨️', app: 'terminal' },
+                { name: 'File Manager', icon: '📁', app: 'fileManager' },
+                { name: 'Settings', icon: '⚙️', app: 'settings' }
+            ]
+        };
+
+        // ===== FILE SYSTEM INITIALIZATION =====
+        function initializeFileSystem() {
+            GoodVOS.fileSystem = {
+                'Downloads': {
+                    'type': 'folder',
+                    'contents': {}
+                },
+                'Pictures': {
+                    'type': 'folder',
+                    'contents': {}
+                },
+                'readme.txt': {
+                    'type': 'file',
+                    'content': 'Welcome to GoodVOS!\nThis is a virtual operating system simulation.\nYou can navigate through files, open applications, and customize your desktop.'
+                }
+            };
+        }
+
+        // ===== UTILITY FUNCTIONS =====
+        function startSystem() {
+            document.getElementById('welcomeScreen').classList.add('hidden');
+            initializeFileSystem();
+            loadSettings();
+            createDesktopIcons();
+            updateTime();
+            setInterval(updateTime, 1000);
+        }
+
+        function updateTime() {
+            const now = new Date();
+            const time = now.toLocaleTimeString('tr-TR');
+            const date = now.toLocaleDateString('tr-TR');
+            document.getElementById('time').textContent = `${time}`;
+        }
+
+        function loadSettings() {
+            const saved = localStorage.getItem('goodvos-wallpaper');
+            if (saved) {
+                GoodVOS.wallpaper = saved;
+            }
+            applyWallpaper();
+        }
+
+        function applyWallpaper() {
+            const desktop = document.getElementById('desktop');
+            if (GoodVOS.wallpaper.startsWith('http')) {
+                desktop.style.backgroundImage = `url('${GoodVOS.wallpaper}')`;
+            } else {
+                desktop.style.background = GoodVOS.wallpaper;
+            }
+        }
+
+        // ===== WINDOW MANAGEMENT =====
+        function createWindow(title, content, appType = '', minWidth = 500, minHeight = 400) {
+            const windowId = GoodVOS.nextWindowId++;
+            const windowEl = document.createElement('div');
+            windowEl.className = 'window';
+            windowEl.id = `window-${windowId}`;
+            windowEl.style.left = (50 + GoodVOS.windows.length * 20) + 'px';
+            windowEl.style.top = (50 + GoodVOS.windows.length * 20) + 'px';
+            windowEl.style.width = minWidth + 'px';
+            windowEl.style.height = minHeight + 'px';
+            windowEl.style.minWidth = minWidth + 'px';
+            windowEl.style.minHeight = minHeight + 'px';
+
+            windowEl.innerHTML = `
+                <div class="window-header">
+                    <div class="window-title">${title}</div>
+                    <div class="window-controls">
+                        <button class="window-button" onclick="minimizeWindow('${windowId}')">−</button>
+                        <button class="window-button" onclick="maximizeWindow('${windowId}')">⬜</button>
+                        <button class="window-button close" onclick="closeWindow('${windowId}')">✕</button>
+                    </div>
+                </div>
+                <div class="window-content" id="content-${windowId}">
+                    ${content}
+                </div>
+            `;
+
+            document.body.appendChild(windowEl);
+
+            // Drag functionality
+            let isDragging = false;
+            let dragOffsetX = 0;
+            let dragOffsetY = 0;
+
+            windowEl.querySelector('.window-header').addEventListener('mousedown', (e) => {
+                isDragging = true;
+                dragOffsetX = e.clientX - windowEl.offsetLeft;
+                dragOffsetY = e.clientY - windowEl.offsetTop;
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (isDragging) {
+                    windowEl.style.left = (e.clientX - dragOffsetX) + 'px';
+                    windowEl.style.top = (e.clientY - dragOffsetY) + 'px';
+                }
+            });
+
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+
+            // Focus window
+            windowEl.addEventListener('mousedown', () => {
+                bringWindowToFront(windowId);
+            });
+
+            GoodVOS.windows.push({
+                id: windowId,
+                title: title,
+                appType: appType,
+                element: windowEl,
+                minimized: false
+            });
+
+            bringWindowToFront(windowId);
+            updateTaskbar();
+
+            return windowId;
+        }
+
+        function bringWindowToFront(windowId) {
+            const maxZ = Math.max(...GoodVOS.windows.map(w => parseInt(w.element.style.zIndex) || 100));
+            const window = GoodVOS.windows.find(w => w.id === windowId);
+            if (window) {
+                window.element.style.zIndex = maxZ + 1;
+            }
+        }
+
+        function closeWindow(windowId) {
+            const index = GoodVOS.windows.findIndex(w => w.id === windowId);
+            if (index > -1) {
+                GoodVOS.windows[index].element.remove();
+                GoodVOS.windows.splice(index, 1);
+                updateTaskbar();
+            }
+        }
+
+        function minimizeWindow(windowId) {
+            const window = GoodVOS.windows.find(w => w.id === windowId);
+            if (window) {
+                window.minimized = !window.minimized;
+                window.element.style.display = window.minimized ? 'none' : 'flex';
+                updateTaskbar();
+            }
+        }
+
+        function maximizeWindow(windowId) {
+            const window = GoodVOS.windows.find(w => w.id === windowId);
+            if (window) {
+                if (window.element.dataset.maximized === 'true') {
+                    window.element.style.width = window.element.dataset.oldWidth;
+                    window.element.style.height = window.element.dataset.oldHeight;
+                    window.element.style.left = window.element.dataset.oldLeft;
+                    window.element.style.top = window.element.dataset.oldTop;
+                    window.element.dataset.maximized = 'false';
+                } else {
+                    window.element.dataset.oldWidth = window.element.style.width;
+                    window.element.dataset.oldHeight = window.element.style.height;
+                    window.element.dataset.oldLeft = window.element.style.left;
+                    window.element.dataset.oldTop = window.element.style.top;
+                    window.element.style.width = '100%';
+                    window.element.style.height = 'calc(100% - 60px)';
+                    window.element.style.left = '0';
+                    window.element.style.top = '0';
+                    window.element.style.borderRadius = '0';
+                    window.element.dataset.maximized = 'true';
+                }
+            }
+        }
+
+        function updateTaskbar() {
+            const container = document.getElementById('taskbarItems');
+            container.innerHTML = '';
+
+            GoodVOS.windows.forEach(window => {
+                const item = document.createElement('div');
+                item.className = 'taskbar-item' + (window.minimized ? '' : ' active');
+                item.textContent = window.title;
+                item.onclick = () => {
+                    if (window.minimized) {
+                        minimizeWindow(window.id);
+                    } else {
+                        minimizeWindow(window.id);
+                    }
+                };
+                container.appendChild(item);
+            });
+        }
+
+        // ===== DESKTOP ICONS =====
+        function createDesktopIcons() {
+            const container = document.getElementById('desktopIcons');
+            container.innerHTML = '';
+
+            GoodVOS.desktopIcons.forEach(icon => {
+                const iconEl = document.createElement('div');
+                iconEl.className = 'desktop-icon';
+                iconEl.innerHTML = `
+                    <div class="icon-image">${icon.icon}</div>
+                    <div class="icon-label">${icon.name}</div>
+                `;
+                iconEl.onclick = () => openApp(icon.app);
+                container.appendChild(iconEl);
+            });
+        }
+
+        // ===== APPLICATION LAUNCHERS =====
+        function openApp(app) {
+            switch(app) {
+                case 'browser':
+                    createBrowserWindow();
+                    break;
+                case 'terminal':
+                    createTerminalWindow();
+                    break;
+                case 'fileManager':
+                    createFileManagerWindow();
+                    break;
+                case 'settings':
+                    createSettingsWindow();
+                    break;
+            }
+        }
+
+        // ===== BROWSER APPLICATION =====
+        function createBrowserWindow() {
+            const content = `
+                <div class="browser-address-bar">
+                    <input type="text" id="browserUrl" placeholder="Enter URL..." value="https://example.com">
+                    <button onclick="navigateBrowser()">Go</button>
+                    <button onclick="downloadFromBrowser()">GoodVOS'a İndir</button>
+                </div>
+                <iframe class="browser-iframe" id="browserFrame" sandbox="allow-same-origin"></iframe>
+            `;
+            const windowId = createWindow('Browser', content, 'browser', 800, 600);
+            navigateBrowser();
+        }
+
+        function navigateBrowser() {
+            const url = document.getElementById('browserUrl').value;
+            const frame = document.getElementById('browserFrame');
+            try {
+                frame.src = url;
+            } catch (e) {
+                frame.src = 'about:blank';
+            }
+        }
+
+        function downloadFromBrowser() {
+            const url = document.getElementById('browserUrl').value;
+            if (url.trim()) {
+                const fileName = url.split('/').pop() || 'downloaded_file';
+                if (!GoodVOS.fileSystem['Downloads']) {
+                    GoodVOS.fileSystem['Downloads'] = { type: 'folder', contents: {} };
+                }
+                GoodVOS.fileSystem['Downloads'].contents[fileName] = {
+                    type: 'file',
+                    content: `[Downloaded from: ${url}]`
+                };
+                alert(`✓ Dosya indirildi: ${fileName}`);
+            }
+        }
+
+        // ===== TERMINAL APPLICATION =====
+        function createTerminalWindow() {
+            const content = `
+                <div class="terminal" id="terminal">
+                    <div class="terminal-output" id="terminalOutput"></div>
+                    <div class="terminal-input-line">
+                        <span class="terminal-prompt">user@goodvos:~$</span>
+                        <input type="text" class="terminal-input" id="terminalInput" placeholder="">
+                        <span class="cursor"></span>
+                    </div>
+                </div>
+            `;
+            const windowId = createWindow('Terminal', content, 'terminal', 700, 500);
+
+            setTimeout(() => {
+                const input = document.getElementById('terminalInput');
+                if (input) {
+                    input.focus();
+                    input.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') {
+                            executeTerminalCommand(input.value);
+                            input.value = '';
+                        }
+                    });
+                }
+            }, 100);
+        }
+
+        let terminalCurrentPath = '/home/user';
+
+        function executeTerminalCommand(cmd) {
+            const output = document.getElementById('terminalOutput');
+            const input = document.getElementById('terminalInput');
+
+            // Add command to output
+            const cmdLine = document.createElement('div');
+            cmdLine.textContent = `$ ${cmd}`;
+            cmdLine.style.marginBottom = '5px';
+            output.appendChild(cmdLine);
+
+            const cmd_trim = cmd.trim();
+
+            if (cmd_trim === 'help') {
+                addTerminalOutput(`Available commands:
+  help          - Show this help message
+  ls            - List files in current directory
+  mkdir [name]  - Create a new folder
+  touch [name]  - Create a new file
+  cat [file]    - Read file contents
+  clear         - Clear the terminal
+  pwd           - Print working directory`);
+            } else if (cmd_trim === 'ls') {
+                addTerminalOutput(listFiles());
+            } else if (cmd_trim.startsWith('mkdir ')) {
+                const folderName = cmd_trim.substring(6).trim();
+                if (folderName) {
+                    createFolder(folderName);
+                } else {
+                    addTerminalOutput('mkdir: missing operand');
+                }
+            } else if (cmd_trim.startsWith('touch ')) {
+                const fileName = cmd_trim.substring(6).trim();
+                if (fileName) {
+                    createFile(fileName);
+                } else {
+                    addTerminalOutput('touch: missing operand');
+                }
+            } else if (cmd_trim.startsWith('cat ')) {
+                const fileName = cmd_trim.substring(4).trim();
+                readFile(fileName);
+            } else if (cmd_trim === 'clear') {
+                output.innerHTML = '';
+            } else if (cmd_trim === 'pwd') {
+                addTerminalOutput(terminalCurrentPath);
+            } else if (cmd_trim === '') {
+                // Empty command
+            } else {
+                addTerminalOutput(`Command not found: ${cmd_trim}`);
+            }
+
+            output.scrollTop = output.scrollHeight;
+            if (input) input.focus();
+        }
+
+        function addTerminalOutput(text) {
+            const output = document.getElementById('terminalOutput');
+            if (output) {
+                const line = document.createElement('div');
+                line.textContent = text;
+                line.style.marginBottom = '5px';
+                output.appendChild(line);
+            }
+        }
+
+        function listFiles() {
+            const fs = GoodVOS.fileSystem;
+            let result = '';
+            for (const key in fs) {
+                const item = fs[key];
+                if (item.type === 'folder') {
+                    result += `[DIR]  ${key}\n`;
+                } else {
+                    result += `[FILE] ${key}\n`;
+                }
+            }
+            return result || '(empty)';
+        }
+
+        function createFolder(name) {
+            if (!GoodVOS.fileSystem[name]) {
+                GoodVOS.fileSystem[name] = { type: 'folder', contents: {} };
+                addTerminalOutput(`Folder created: ${name}`);
+            } else {
+                addTerminalOutput(`Error: ${name} already exists`);
+            }
+        }
+
+        function createFile(name) {
+            if (!GoodVOS.fileSystem[name]) {
+                GoodVOS.fileSystem[name] = { type: 'file', content: '' };
+                addTerminalOutput(`File created: ${name}`);
+            } else {
+                addTerminalOutput(`Error: ${name} already exists`);
+            }
+        }
+
+        function readFile(name) {
+            const file = GoodVOS.fileSystem[name];
+            if (file && file.type === 'file') {
+                addTerminalOutput(file.content || '(empty file)');
+            } else if (!file) {
+                addTerminalOutput(`cat: ${name}: No such file or directory`);
+            } else {
+                addTerminalOutput(`cat: ${name}: Is a directory`);
+            }
+        }
+
+        // ===== FILE MANAGER APPLICATION =====
+        function createFileManagerWindow() {
+            const content = generateFileManagerContent('root');
+            const windowId = createWindow('File Manager', content, 'fileManager', 600, 500);
+        }
+
+        function generateFileManagerContent(path = 'root') {
+            let content = `
+                <div class="file-manager-header">
+                    <button onclick="openFileManager('root')">Home</button>
+                </div>
+                <div class="current-path">📍 /${path}</div>
+                <div class="file-list" id="fileList">
+            `;
+
+            const fs = GoodVOS.fileSystem;
+            for (const key in fs) {
+                const item = fs[key];
+                if (item.type === 'folder') {
+                    content += `
+                        <div class="file-item" ondblclick="navigateFolder('${key}')">
+                            <span class="file-icon">📁</span>
+                            <span class="file-name">${key}/</span>
+                        </div>
+                    `;
+                } else {
+                    const isImage = key.endsWith('.png') || key.endsWith('.jpg') || key.endsWith('.jpeg') || key.endsWith('.gif');
+                    content += `
+                        <div class="file-item" ondblclick="${isImage ? `setWallpaper('${key}')` : `readFileContent('${key}')`}">
+                            <span class="file-icon">${isImage ? '🖼️' : '📄'}</span>
+                            <span class="file-name">${key}</span>
+                            <div class="file-actions">
+                                <button onclick="deleteFile('${key}'); event.stopPropagation();">Delete</button>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
+            content += `</div>`;
+            return content;
+        }
+
+        function openFileManager(path) {
+            const windows = GoodVOS.windows.filter(w => w.appType === 'fileManager');
+            if (windows.length > 0) {
+                const windowEl = windows[0].element;
+                const content = windowEl.querySelector('.window-content');
+                content.innerHTML = generateFileManagerContent(path);
+            } else {
+                createFileManagerWindow();
+            }
+        }
+
+        function navigateFolder(folderName) {
+            // Simple implementation - just refresh
+            openFileManager(folderName);
+        }
+
+        function deleteFile(fileName) {
+            if (confirm(`Delete ${fileName}?`)) {
+                delete GoodVOS.fileSystem[fileName];
+                openFileManager('root');
+            }
+        }
+
+        function readFileContent(fileName) {
+            const file = GoodVOS.fileSystem[fileName];
+            if (file && file.type === 'file') {
+                alert(`Content of ${fileName}:\n\n${file.content}`);
+            }
+        }
+
+        function setWallpaper(imageName) {
+            const file = GoodVOS.fileSystem[imageName];
+            if (file && file.content && file.content.startsWith('http')) {
+                GoodVOS.wallpaper = file.content;
+            } else if (file && (imageName.endsWith('.png') || imageName.endsWith('.jpg'))) {
+                alert('Set wallpaper from image URL?');
+            }
+        }
+
+        // ===== SETTINGS APPLICATION =====
+        function createSettingsWindow() {
+            const content = `
+                <div class="settings-section">
+                    <div class="settings-section-title">🎨 Görünüm</div>
+                    <div class="settings-option">
+                        <label>Tema</label>
+                        <select onchange="changeTheme(this.value)">
+                            <option value="dark">Koyu (Dark)</option>
+                            <option value="default">Varsayılan</option>
+                        </select>
+                    </div>
+                    <div class="settings-option">
+                        <label>Duvar Kağıdı URL</label>
+                        <input type="text" id="wallpaperUrl" placeholder="https://example.com/image.png">
+                        <button onclick="applyCustomWallpaper()" style="margin-left: 10px; padding: 6px 12px;">Uygula</button>
+                    </div>
+                    <div class="wallpaper-preview" id="wallpaperPreview" style="background-image: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%)"></div>
+                </div>
+                
+                <div class="settings-section">
+                    <div class="settings-section-title">💾 Sistem</div>
+                    <div class="settings-option">
+                        <label>Sistem Sürümü</label>
+                        <span>GoodVOS v1.0</span>
+                    </div>
+                    <div class="settings-option">
+                        <label>Bellek Kullanımı</label>
+                        <span>${Math.round(performance.memory?.usedJSHeapSize / 1048576 || 0)} MB</span>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <div class="settings-section-title">🔧 Kişiselleştirme</div>
+                    <button onclick="resetSettings()" style="padding: 8px 15px; background: rgba(255, 100, 100, 0.2); border: 1px solid rgba(255, 100, 100, 0.4); color: #ff6464; border-radius: 4px; cursor: pointer;">Fabrika Ayarlarına Sıfırla</button>
+                </div>
+            `;
+            createWindow('Settings', content, 'settings', 500, 600);
+        }
+
+        function changeTheme(theme) {
+            if (theme === 'dark') {
+                document.body.style.background = '#000';
+            }
+        }
+
+        function applyCustomWallpaper() {
+            const url = document.getElementById('wallpaperUrl').value;
+            if (url.trim()) {
+                GoodVOS.wallpaper = url;
+                localStorage.setItem('goodvos-wallpaper', url);
+                applyWallpaper();
+                const preview = document.getElementById('wallpaperPreview');
+                if (preview) {
+                    preview.style.backgroundImage = `url('${url}')`;
+                }
+                alert('Duvar kağıdı uygulandı!');
+            }
+        }
+
+        function resetSettings() {
+            if (confirm('Tüm ayarlar sıfırlanacak. Devam etmek istiyor musunuz?')) {
+                localStorage.removeItem('goodvos-wallpaper');
+                GoodVOS.wallpaper = 'linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%)';
+                applyWallpaper();
+                alert('Ayarlar sıfırlandı!');
+            }
+        }
+    </script>
+</body>
+</html>
